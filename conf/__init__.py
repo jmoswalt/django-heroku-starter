@@ -35,7 +35,6 @@ def load_env(separator, line):
             env_value = env_value[1:-1]
 
         environ[env_key] = env_value
-        print env_key, env_value
 
 # Load the .env file into the os.environ for secure information
 try:
