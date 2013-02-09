@@ -9,9 +9,9 @@ def env(e, d=None):
     Allows passing a default value.
     """
     if e in environ:
-        if environ[e] == "False":
+        if environ[e].lower() == "false":
             return False
-        elif environ[e] == "True":
+        elif environ[e].lower() == "true":
             return True
         return environ[e]
     else:
@@ -23,18 +23,9 @@ def load_env(separator, line):
     This method parses a line using a separator to
     populate the local environment with a key/value pair.
     """
-    env_key = line.rstrip().split(separator)[0].rstrip()
-    # set the environment variable to the value with the start and
-    # end quotes taken off.
-    if len(line.rstrip().split(separator)) > 2:
-        env_value = separator.join(line.rstrip().split(separator)[1:]).strip()
-    else:
-        env_value = line.rstrip().split(separator)[1].strip()
-    if env_value:
-        if env_value[0] == "'" or env_value[0] == '"':
-            env_value = env_value[1:-1]
-
-        environ[env_key] = env_value
+    env_key = line.rstrip().split(separator)[0].strip()
+    env_value = line.rstrip().split(separator, 1)[1].strip()
+    environ[env_key] = env_value
 
 # Load the .env file into the os.environ for secure information
 try:

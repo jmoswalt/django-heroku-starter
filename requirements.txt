@@ -1,9 +1,10 @@
-django==1.4.1
+django==1.4.3
 
 # Heroku deployment packages
 dj-database-url==0.2.1
 psycopg2==2.4.5
-gunicorn==0.14.5
+gunicorn==0.16.1
+gevent==0.13.8
 
 # S3 storage packages
 django-s3-folder-storage==0.1
@@ -11,3 +12,6 @@ django-storages==1.1.5
 
 # For Sentry
 raven==2.0.2
+
+# memcached
+python-memcached==1.48

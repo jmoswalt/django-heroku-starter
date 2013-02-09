@@ -1,5 +1,5 @@
+from os import environ, path
 import dj_database_url
-from os import environ
 from . import env
 
 # Debug option which is useful when working locally.
@@ -10,14 +10,20 @@ ADMINS = ()
 
 MANAGERS = ADMINS
 
+PROJECT_ROOT = path.abspath(path.join(path.dirname(__file__), ".."))
+
+# -------------------------------------- #
+# DEBUG
+# -------------------------------------- #
+
+DEBUG = env('DEBUG', False)
+TEMPLATE_DEBUG = env('DEBUG', DEBUG)
+
 
 # -------------------------------------- #
 # DATABASES
 # -------------------------------------- #
-
-DATABASES = env('DATABASES', {'default': dj_database_url.config(default='postgres://localhost/django')})
-
-DATABASES['default']['OPTIONS'] = {'autocommit': True}
+DATABASES = env('DATABASES', {'default': dj_database_url.config(default='postgres://localhost')})
 
 
 # Make this unique, and don't share it with anybody.
@@ -46,31 +52,76 @@ USE_L10N = True
 # If you set this to False, Django will not use timezone-aware datetimes.
 USE_TZ = True
 
-# Absolute filesystem path to the directory that will hold user-uploaded files.
-# Example: "/home/media/media.lawrence.com/media/"
-MEDIA_ROOT = ''
+# -------------------------------------- #
+# INSTALLED_APPS
+# -------------------------------------- #
 
-# URL that handles the media served from MEDIA_ROOT. Make sure to use a
-# trailing slash.
-# Examples: "http://media.lawrence.com/media/", "http://example.com/media/"
-MEDIA_URL = ''
+INSTALLED_APPS = (
+    'django.contrib.auth',
+    'django.contrib.contenttypes',
+    'django.contrib.sessions',
+    'django.contrib.sites',
+    'django.contrib.messages',
+    'django.contrib.staticfiles',
+    'django.contrib.admin',
+    'gunicorn',
+)
 
-# Absolute path to the directory static files should be collected to.
-# Don't put anything in this directory yourself; store your static files
-# in apps' "static/" subdirectories and in STATICFILES_DIRS.
-# Example: "/home/media/media.lawrence.com/static/"
-STATIC_ROOT = ''
 
-# URL prefix for static files.
-# Example: "http://media.lawrence.com/static/"
+# -------------------------------------- #
+# STATIC MEDIA
+# -------------------------------------- #
+
+MEDIA_ROOT = path.join(PROJECT_ROOT, 'media')
+MEDIA_URL = '/media/'
+STATIC_ROOT = path.join(PROJECT_ROOT, 'static')
 STATIC_URL = '/static/'
 
-# Additional locations of static files
-STATICFILES_DIRS = (
-    # Put strings here, like "/home/html/static" or "C:/www/django/static".
-    # Always use forward slashes, even on Windows.
-    # Don't forget to use absolute paths, not relative paths.
-)
+
+# ----------------------------------------- #
+# s3 storeage example
+# set this up at https://console.aws.amazon.com/console/home
+# deploy script will ignore and use local if not configured.
+# It's all good.
+# ----------------------------------------- #
+AWS_LOCATION = env('AWS_LOCATION', '')    # this is usually your site name
+AWS_ACCESS_KEY_ID = env('AWS_ACCESS_KEY_ID', '')
+AWS_SECRET_ACCESS_KEY = env('AWS_SECRET_ACCESS_KEY', '')
+AWS_STORAGE_BUCKET_NAME = env('AWS_STORAGE_BUCKET_NAME', '')
+
+USE_S3_STORAGE = all([AWS_LOCATION,
+                    AWS_ACCESS_KEY_ID,
+                    AWS_SECRET_ACCESS_KEY,
+                    AWS_STORAGE_BUCKET_NAME])
+
+if USE_S3_STORAGE:
+
+    INSTALLED_APPS += (
+                       'storages',
+                       's3_folder_storage',
+                       )
+
+    S3_ROOT_URL = env('S3_ROOT_URL', 'https://s3.amazonaws.com')
+    S3_SITE_ROOT_URL = '%s/%s/%s' % (S3_ROOT_URL, AWS_STORAGE_BUCKET_NAME, AWS_LOCATION)
+    AWS_QUERYSTRING_AUTH = False
+
+    # media
+    DEFAULT_S3_PATH = "%s/media" % AWS_LOCATION
+    DEFAULT_FILE_STORAGE = 's3_folder_storage.s3.DefaultStorage'
+    MEDIA_ROOT = '/%s/' % DEFAULT_S3_PATH
+    MEDIA_URL = '%s/media/' % S3_SITE_ROOT_URL
+
+    # static
+    STATIC_S3_PATH = "%s/static" % AWS_LOCATION
+    STATICFILES_STORAGE = 's3_folder_storage.s3.StaticStorage'
+    S3_STATIC_ROOT = "/%s/" % STATIC_S3_PATH
+    STATIC_URL = '%s/static/' % S3_SITE_ROOT_URL
+
+    # themes
+    THEME_S3_PATH = "%s/themes" % AWS_LOCATION
+    S3_THEME_ROOT = "/%s/" % THEME_S3_PATH
+    THEMES_DIR = '%s/themes' % S3_SITE_ROOT_URL
+
 
 # List of finder classes that know how to find static files in
 # various locations.
@@ -106,16 +157,6 @@ TEMPLATE_DIRS = (
     # Put strings here, like "/home/html/django_templates" or "C:/www/django/templates".
     # Always use forward slashes, even on Windows.
     # Don't forget to use absolute paths, not relative paths.
-)
-
-INSTALLED_APPS = (
-    'django.contrib.auth',
-    'django.contrib.contenttypes',
-    'django.contrib.sessions',
-    'django.contrib.sites',
-    'django.contrib.messages',
-    'django.contrib.staticfiles',
-    'django.contrib.admin',
 )
 
 
